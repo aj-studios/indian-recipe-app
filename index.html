@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Recipes - Authentic Delicacies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide-react@0.294.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fdfcfb; }
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+        .recipe-tag { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .bg-tag-state { background-color: #fff8e1; color: #f59e0b; }
+        .bg-tag-level { background-color: #f3f4f6; color: #4b5563; }
+        .instructions-list { list-style: none; padding-left: 0; counter-reset: steps-counter; }
+        .instructions-list li { counter-increment: steps-counter; display: flex; align-items: flex-start; margin-bottom: 1rem; }
+        .instructions-list li::before { content: counter(steps-counter); display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; background-color: #f97316; border-radius: 50%; width: 1.5rem; height: 1.5rem; min-width: 1.5rem; margin-right: 0.75rem; font-size: 0.875rem; }
+        
+        /* Loading Spinner */
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #f97316; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="#" class="flex items-center gap-2 cursor-pointer" data-page="homePage">
+                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+                    </div>
+                    <span class="font-bold text-xl text-gray-800">Indian Recipes</span>
+                </a>
+                <div class="flex items-center gap-6">
+                    <a href="#" class="text-gray-600 hover:text-orange-500 transition-colors" data-page="homePage">Home</a>
+                    <a href="#" class="text-gray-600 hover:text-orange-500 transition-colors" data-page="browseStatesPage">Browse States</a>
+                    
+                    <a href="#" class="text-orange-600 font-medium hover:text-orange-700 transition-colors hidden" data-page="addRecipePage" id="nav-add-recipe">
+                        + Add Recipe
+                    </a>
+
+                    <a href="#" class="text-gray-600 hover:text-orange-500 transition-colors" data-page="loginPage" id="nav-login-link">Login</a>
+                    <a href="#" class="text-gray-600 hover:text-orange-500 transition-colors hidden" data-page="accountPage" id="nav-account-link">My Account</a>
+                    <a href="#" class="text-gray-600 hover:text-orange-500 transition-colors hidden" id="nav-logout-button">Log Out</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+
+        <div id="homePage" class="page-view active">
+           <section class="rounded-lg overflow-hidden relative h-[50vh] min-h-[400px] flex items-center p-8 md:p-16" style="background-image: url('https://images.unsplash.com/photo-1596797038530-2c107229654b?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center;">
+                <div class="relative z-10 max-w-xl">
+                    <h1 class="text-5xl md:text-6xl font-bold text-white leading-tight">Discover <span class="text-orange-400">Authentic Indian</span> Recipes</h1>
+                    <p class="text-lg text-white/90 mt-4">Explore traditional flavors from Maharashtra and beyond. From street food to festive feasts.</p>
+                    <button class="mt-8 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center gap-2 transition-transform active:scale-95" onclick="showPage('browseStatesPage')">Explore Recipes</button>
+                </div>
+            </section>
+
+            <section class="mt-16">
+                <h2 class="text-3xl font-bold text-center text-gray-800">Browse by State</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-6 mt-8">
+                    <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Maharashtra">
+                        <h3 class="font-semibold text-gray-800">Maharashtra</h3>
+                    </a>
+                    <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Gujarat">
+                        <h3 class="font-semibold text-gray-800">Gujarat</h3>
+                    </a>
+                    <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Karnataka">
+                        <h3 class="font-semibold text-gray-800">Karnataka</h3>
+                    </a>
+                    <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Rajasthan">
+                        <h3 class="font-semibold text-gray-800">Rajasthan</h3>
+                    </a>
+                    <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Punjab">
+                        <h3 class="font-semibold text-gray-800">Punjab</h3>
+                    </a>
+                    <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Kerala">
+                        <h3 class="font-semibold text-gray-800">Kerala</h3>
+                    </a>
+                </div>
+            </section>
+
+            <section class="mt-16">
+                <h2 class="text-3xl font-bold text-center text-gray-800">Featured Recipes</h2>
+                <div id="featured-recipes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                    <p class="col-span-full text-center text-gray-500"><div class="loader"></div> Loading recipes...</p>
+                </div>
+            </section>
+        </div>
+
+        <div id="addRecipePage" class="page-view">
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Add a New Recipe</h2>
+                <p class="mb-6 text-gray-600">Share your culinary secrets with the community.</p>
+                
+                <form id="add-recipe-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Recipe Name</label>
+                            <input type="text" id="ar-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">State / Region</label>
+                            <select id="ar-state" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white">
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Gujarat">Gujarat</option>
+                                <option value="Punjab">Punjab</option>
+                                <option value="South India">South India</option>
+                                <option value="Rajasthan">Rajasthan</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="ar-desc" rows="2" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Recipe Image</label>
+                        <input type="file" id="ar-image" accept="image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                        <p class="text-xs text-gray-500 mt-1">Upload a clear photo of the dish.</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Cook Time</label>
+                            <input type="text" id="ar-time" placeholder="e.g. 45 mins" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Servings</label>
+                            <input type="text" id="ar-servings" placeholder="e.g. 4 people" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Difficulty</label>
+                            <select id="ar-level" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-white">
+                                <option>Easy</option>
+                                <option>Medium</option>
+                                <option>Hard</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Ingredients (Comma separated)</label>
+                        <textarea id="ar-ingredients" rows="3" placeholder="Flour, Sugar, Water, ..." required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Instructions (New line for each step)</label>
+                        <textarea id="ar-instructions" rows="5" placeholder="Step 1: Mix the flour...&#10;Step 2: Heat the pan..." required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                    </div>
+
+                    <div id="ar-message" class="hidden p-3 rounded text-sm text-center"></div>
+
+                    <button type="submit" id="ar-submit-btn" class="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        Post Recipe
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="recipePage" class="page-view max-w-4xl mx-auto">
+            <nav class="text-sm breadcrumbs mb-4">
+                <a href="#" class="text-orange-500 hover:underline" data-page="homePage">Home</a>
+                <span class="mx-1 text-gray-400">/</span>
+                <span id="recipe-breadcrumb-state" class="text-gray-600">State</span>
+                <span class="mx-1 text-gray-400">/</span>
+                <span id="recipe-breadcrumb-name" class="text-gray-500">Recipe Name</span>
+            </nav>
+            <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg border border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div><img id="recipe-image" src="" alt="Recipe Image" class="w-full h-auto rounded-lg object-cover"></div>
+                    <div class="flex flex-col justify-center">
+                        <div><span id="recipe-tag-state" class="recipe-tag bg-tag-state"></span><span id="recipe-tag-level" class="recipe-tag bg-tag-level ml-2"></span></div>
+                        <h1 id="recipe-name" class="text-4xl font-bold text-gray-900 mt-3"></h1>
+                        <p id="recipe-description" class="text-gray-600 mt-3"></p>
+                        <div class="flex flex-wrap gap-4 mt-6 text-sm">
+                            <div class="flex items-center gap-2 text-gray-700"><span class="font-medium">Cook Time:</span><span id="recipe-cooktime"></span></div>
+                            <div class="flex items-center gap-2 text-gray-700"><span class="font-medium">Servings:</span><span id="recipe-servings"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-8 pt-8 border-t border-gray-200">
+                    <div class="md:col-span-1">
+                        <h2 class="text-2xl font-semibold text-gray-800">Ingredients</h2>
+                        <ul id="recipe-ingredients" class="list-disc list-inside text-gray-700 mt-4 space-y-2 marker:text-orange-500"></ul>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h2 class="text-2xl font-semibold text-gray-800">Instructions</h2>
+                        <ol id="recipe-instructions" class="instructions-list mt-4 text-gray-700"></ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="statePage" class="page-view">
+            <nav class="text-sm breadcrumbs mb-4">
+                <a href="#" class="text-orange-500 hover:underline" data-page="homePage">Home</a>
+                <span class="mx-1 text-gray-400">/</span>
+                <a href="#" class="text-orange-500 hover:underline" data-page="browseStatesPage">Browse States</a>
+                <span class="mx-1 text-gray-400">/</span>
+                <span id="state-breadcrumb-name" class="text-gray-500">State</span>
+            </nav>
+            <h2 id="state-page-title" class="text-3xl font-bold text-gray-800 mb-8"></h2>
+            <div id="state-page-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </div>
+        
+        <div id="browseStatesPage" class="page-view">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Browse by State</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+                 <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Maharashtra">
+                    <h3 class="font-semibold text-gray-800">Maharashtra</h3>
+                </a>
+                <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Gujarat">
+                    <h3 class="font-semibold text-gray-800">Gujarat</h3>
+                </a>
+                <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Karnataka">
+                    <h3 class="font-semibold text-gray-800">Karnataka</h3>
+                </a>
+                <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Rajasthan">
+                    <h3 class="font-semibold text-gray-800">Rajasthan</h3>
+                </a>
+                <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Punjab">
+                    <h3 class="font-semibold text-gray-800">Punjab</h3>
+                </a>
+                <a href="#" class="block bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center" data-page="statePage" data-state="Kerala">
+                    <h3 class="font-semibold text-gray-800">Kerala</h3>
+                </a>
+            </div>
+        </div>
+
+        <div id="loginPage" class="page-view">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200 mt-10">
+                <h2 class="text-3xl font-bold text-center text-gray-800">Welcome Back!</h2>
+                <form id="login-form" class="mt-8 space-y-6">
+                    <div><label class="block text-sm font-medium text-gray-700">Email address</label><input type="email" id="login-email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Password</label><input type="password" id="login-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    <div id="login-error" class="hidden text-sm text-red-600"></div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600">Sign in</button>
+                </form>
+                <p class="mt-6 text-center text-sm text-gray-600">Don't have an account? <a href="#" class="font-medium text-orange-600 hover:text-orange-500" data-page="signUpPage">Sign up</a></p>
+            </div>
+        </div>
+
+        <div id="signUpPage" class="page-view">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200 mt-10">
+                <h2 class="text-3xl font-bold text-center text-gray-800">Create an Account</h2>
+                <form id="signup-form" class="mt-8 space-y-6">
+                    <div><label class="block text-sm font-medium text-gray-700">Email address</label><input type="email" id="signup-email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Password</label><input type="password" id="signup-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    <div id="signup-error" class="hidden text-sm text-red-600"></div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600">Create Account</button>
+                </form>
+                <p class="mt-6 text-center text-sm text-gray-600">Already have an account? <a href="#" class="font-medium text-orange-600 hover:text-orange-500" data-page="loginPage">Sign in</a></p>
+            </div>
+        </div>
+
+        <div id="accountPage" class="page-view">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200 mt-10">
+                <h2 class="text-3xl font-bold text-gray-800">My Account</h2>
+                <p class="text-gray-600 mt-4">Welcome back, <span id="account-email" class="font-medium text-gray-900">...</span></p>
+                <button onclick="showPage('addRecipePage')" class="mt-6 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">Add New Recipe</button>
+                <button id="logout-button-page" class="mt-3 w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Log Out</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ==========================================
+        //  SUPABASE CONFIGURATION
+        // ==========================================
+        //  IMPORTANT: You will replace these two lines in the NEXT STEP.
+        //  For now, keep them as is. The app will load but login/data won't work until filled.
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_KEY';
+        
+        // Initialize Supabase Client
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn("Supabase not initialized yet (Wait for keys)");
+        }
+
+        // Global State
+        let currentUser = null;
+        let recipesDB = {}; 
+
+        // ==========================================
+        //  AUTHENTICATION LOGIC
+        // ==========================================
+        
+        async function initAuth() {
+            if(!supabase) return;
+
+            // Check current session
+            const { data: { session } } = await supabase.auth.getSession();
+            handleUserSession(session);
+
+            // Listen for changes (Login/Logout)
+            supabase.auth.onAuthStateChange((_event, session) => {
+                handleUserSession(session);
+            });
+        }
+
+        function handleUserSession(session) {
+            currentUser = session?.user || null;
+            
+            const navLogin = document.getElementById('nav-login-link');
+            const navAccount = document.getElementById('nav-account-link');
+            const navLogout = document.getElementById('nav-logout-button');
+            const navAddRecipe = document.getElementById('nav-add-recipe'); // New Link
+
+            if (currentUser) {
+                // User is Logged In
+                document.getElementById('account-email').textContent = currentUser.email;
+                navLogin.classList.add('hidden');
+                navAccount.classList.remove('hidden');
+                navLogout.classList.remove('hidden');
+                navAddRecipe.classList.remove('hidden'); // Show "Add Recipe"
+            } else {
+                // User is Logged Out
+                navLogin.classList.remove('hidden');
+                navAccount.classList.add('hidden');
+                navLogout.classList.add('hidden');
+                navAddRecipe.classList.add('hidden'); // Hide "Add Recipe"
+            }
+        }
+
+        // ==========================================
+        //  DATA FETCHING (READ)
+        // ==========================================
+
+        async function fetchAllRecipes() {
+            if(!supabase) return; // Fallback if keys missing
+
+            const grid = document.getElementById('featured-recipes-grid');
+            try {
+                // Fetch from Supabase Table 'recipes'
+                const { data, error } = await supabase
+                    .from('recipes')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // Reset DB object
+                recipesDB = {};
+                data.forEach(r => recipesDB[r.id] = r);
+                
+                updateUI(data); // Pass data array directly
+            } catch (error) {
+                console.warn('Supabase fetch error (expected if no keys yet):', error);
+                grid.innerHTML = '<p class="col-span-full text-center text-gray-500">Connect to Supabase to see recipes.</p>';
+            }
+        }
+
+        function updateUI(recipesList) {
+            const grid = document.getElementById('featured-recipes-grid');
+            grid.innerHTML = '';
+            
+            if (!recipesList || recipesList.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center">No recipes found yet.</p>';
+                return;
+            }
+
+            // Show first 8 recipes on home
+            recipesList.slice(0, 8).forEach(recipe => {
+                grid.innerHTML += createRecipeCard(recipe);
+            });
+        }
+
+        // ==========================================
+        //  ADD RECIPE LOGIC (CREATE)
+        // ==========================================
+        
+        async function handleAddRecipeSubmit(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                alert("Please log in to add a recipe.");
+                showPage('loginPage');
+                return;
+            }
+
+            const btn = document.getElementById('ar-submit-btn');
+            const msg = document.getElementById('ar-message');
+            
+            try {
+                btn.textContent = 'Uploading...';
+                btn.disabled = true;
+
+                // 1. Get Form Values
+                const name = document.getElementById('ar-name').value;
+                const state = document.getElementById('ar-state').value;
+                const desc = document.getElementById('ar-desc').value;
+                const time = document.getElementById('ar-time').value;
+                const servings = document.getElementById('ar-servings').value;
+                const level = document.getElementById('ar-level').value;
+                
+                // Convert Text areas to Arrays
+                const ingredients = document.getElementById('ar-ingredients').value.split(',').map(s=>s.trim());
+                const instructions = document.getElementById('ar-instructions').value.split('\n').map(s=>s.trim());
+
+                // 2. Upload Image to Supabase Storage
+                const fileInput = document.getElementById('ar-image');
+                if (fileInput.files.length === 0) throw new Error("Please select an image.");
+                const file = fileInput.files[0];
+                
+                // Create unique filename: timestamp_filename
+                const fileName = `${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+                
+                // Upload
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('recipe-images') // We must create this bucket in Supabase
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                // Get Public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('recipe-images')
+                    .getPublicUrl(fileName);
+
+                // 3. Insert Record into Database
+                const { error: dbError } = await supabase.from('recipes').insert({
+                    name: name,
+                    description: desc,
+                    state: state,
+                    cook_time: time,
+                    servings: servings,
+                    level: level,
+                    ingredients: ingredients, // Supabase stores JSON automatically
+                    instructions: instructions,
+                    image_url: publicUrl,
+                    user_id: currentUser.id // Link to author
+                });
+
+                if (dbError) throw dbError;
+
+                // Success
+                msg.textContent = "Recipe added successfully!";
+                msg.className = "p-3 rounded text-sm text-center bg-green-100 text-green-700 block";
+                document.getElementById('add-recipe-form').reset();
+                
+                // Refresh recipes and go home
+                setTimeout(() => {
+                    msg.className = "hidden";
+                    btn.textContent = "Post Recipe";
+                    btn.disabled = false;
+                    fetchAllRecipes();
+                    showPage('homePage');
+                }, 1500);
+
+            } catch (err) {
+                console.error(err);
+                msg.textContent = "Error: " + err.message;
+                msg.className = "p-3 rounded text-sm text-center bg-red-100 text-red-700 block";
+                btn.textContent = "Post Recipe";
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        //  UI HELPERS & NAVIGATION
+        // ==========================================
+
+        function createRecipeCard(recipe) {
+            // Handle legacy/string data vs JSON data
+            return `
+                <a href="#" class="recipe-card block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group" data-recipe-id="${recipe.id}">
+                    <div class="overflow-hidden h-48 relative">
+                        <img src="${recipe.image_url || recipe.image}" alt="${recipe.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="p-4">
+                        <div>
+                            <span class="recipe-tag bg-tag-state">${recipe.state}</span>
+                            <span class="recipe-tag bg-tag-level ml-2">${recipe.level}</span>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mt-3 group-hover:text-orange-500 transition-colors">${recipe.name}</h3>
+                        <div class="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                            <span class="flex items-center gap-1">Clock: ${recipe.cook_time}</span>
+                            <span class="flex items-center gap-1">Servings: ${recipe.servings}</span>
+                        </div>
+                    </div>
+                </a>
+            `;
+        }
+
+        function showRecipe(recipeId) {
+            const recipe = recipesDB[recipeId];
+            if (!recipe) return;
+
+            document.getElementById('recipe-image').src = recipe.image_url || recipe.image;
+            document.getElementById('recipe-name').textContent = recipe.name;
+            document.getElementById('recipe-description').textContent = recipe.description;
+            document.getElementById('recipe-cooktime').textContent = recipe.cook_time;
+            document.getElementById('recipe-servings').textContent = recipe.servings;
+            document.getElementById('recipe-tag-state').textContent = recipe.state;
+            document.getElementById('recipe-tag-level').textContent = recipe.level;
+            document.getElementById('recipe-breadcrumb-name').textContent = recipe.name;
+            document.getElementById('recipe-breadcrumb-state').textContent = recipe.state;
+
+            const ingList = document.getElementById('recipe-ingredients');
+            ingList.innerHTML = '';
+            // Handle if Supabase returns object or string
+            let ingredients = recipe.ingredients;
+            if (typeof ingredients === 'string') {
+                 try { ingredients = JSON.parse(ingredients); } catch(e) { ingredients = [ingredients]; }
+            }
+            if(Array.isArray(ingredients)) ingredients.forEach(i => ingList.innerHTML += `<li>${i}</li>`);
+
+            const instList = document.getElementById('recipe-instructions');
+            instList.innerHTML = '';
+            let instructions = recipe.instructions;
+            if (typeof instructions === 'string') {
+                 try { instructions = JSON.parse(instructions); } catch(e) { instructions = [instructions]; }
+            }
+            if(Array.isArray(instructions)) instructions.forEach(i => instList.innerHTML += `<li>${i}</li>`);
+
+            showPage('recipePage');
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function showStatePage(stateName) {
+            if (!stateName) return;
+            // Filter locally from loaded DB
+            const recipes = Object.values(recipesDB).filter(r => r.state === stateName);
+            const grid = document.getElementById('state-page-grid');
+            grid.innerHTML = '';
+            document.getElementById('state-page-title').textContent = `Recipes from ${stateName}`;
+            document.getElementById('state-breadcrumb-name').textContent = stateName;
+            
+            if(recipes.length > 0) recipes.forEach(r => grid.innerHTML += createRecipeCard(r));
+            else grid.innerHTML = `<p class="col-span-full text-gray-500">No recipes found for ${stateName}.</p>`;
+            
+            showPage('statePage');
+        }
+
+        // ==========================================
+        //  INITIALIZATION
+        // ==========================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+            fetchAllRecipes();
+
+            // Navigation Clicks
+            document.body.addEventListener('click', (e) => {
+                const pageLink = e.target.closest('[data-page]');
+                if (pageLink) {
+                    e.preventDefault();
+                    const pid = pageLink.getAttribute('data-page');
+                    if(pid === 'statePage') showStatePage(pageLink.getAttribute('data-state'));
+                    else showPage(pid);
+                }
+                const card = e.target.closest('.recipe-card');
+                if (card) {
+                    e.preventDefault();
+                    showRecipe(card.getAttribute('data-recipe-id'));
+                }
+            });
+
+            // Signup Form
+            document.getElementById('signup-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                const errDiv = document.getElementById('signup-error');
+                
+                try {
+                    const { data, error } = await supabase.auth.signUp({ email, password });
+                    if (error) throw error;
+                    alert("Registration successful! Check your email to confirm.");
+                    showPage('loginPage');
+                } catch (err) {
+                    errDiv.textContent = err.message;
+                    errDiv.classList.remove('hidden');
+                }
+            });
+
+            // Login Form
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                const errDiv = document.getElementById('login-error');
+                
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    // Auth state change listener will handle redirect
+                    showPage('homePage');
+                } catch (err) {
+                    errDiv.textContent = err.message;
+                    errDiv.classList.remove('hidden');
+                }
+            });
+
+            // Logout
+            const handleLogout = async () => { await supabase.auth.signOut(); showPage('homePage'); };
+            document.getElementById('nav-logout-button').addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
+            document.getElementById('logout-button-page').addEventListener('click', (e) => { e.preventDefault(); handleLogout(); });
+
+            // Add Recipe Form
+            document.getElementById('add-recipe-form').addEventListener('submit', handleAddRecipeSubmit);
+        });
+    </script>
+</body>
+</html>
