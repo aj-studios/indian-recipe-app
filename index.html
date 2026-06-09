@@ -277,22 +277,20 @@
 
     </main>
 
-    <script>
-        // ==========================================
+    <script>// ==========================================
         //  SUPABASE CONFIGURATION
         // ==========================================
-        //  IMPORTANT: You will replace these two lines in the NEXT STEP.
-        //  For now, keep them as is. The app will load but login/data won't work until filled.
         const SUPABASE_URL = 'https://vljaayrypbzikndckcqm.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsamFheXJ5cGJ6aWtuZGNrY3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODEwNzEsImV4cCI6MjA5NjU1NzA3MX0.UYxGF6rnHh_oqqrKVdVxUrhayHArHsdMn-0iKowfLbo';
         
-        // Initialize Supabase Client
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.warn("Supabase not initialized yet (Wait for keys)");
-        }
+        // Put your REAL PUBLIC ANON KEY inside these quotes!
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsamFheXJ5cGJ6aWtuZGNrY3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODEwNzEsImV4cCI6MjA5NjU1NzA3MX0.UYxGF6rnHh_oqqrKVdVxUrhayHArHsdMn-0iKowfLbo'; 
+        
+        // Initialize Supabase Client (Simplified to a single line to prevent crashes)
+        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Global State
+        let currentUser = null;
+        let recipesDB = {};
 
         // Global State
         let currentUser = null;
